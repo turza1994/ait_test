@@ -1,0 +1,45 @@
+{
+  "name": "boilerplate-fullstack",
+  "version": "1.0.0",
+  "description": "Fullstack monoreboilerplate with Next.js frontend and Express.js backend",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "install:all": "npm install",
+    "dev": "node scripts/dev.js",
+    "dev:frontend": "npm run dev --workspace=packages/frontend",
+    "build": "node scripts/build.js",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:frontend": "npm run start --workspace=packages/frontend",
+    "start:backend": "npm run start --workspace=packages/backend",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "lint:fix": "npm run lint:fix --workspaces",
+    "format": "npm run format --workspaces",
+    "clean": "node scripts/clean.js",
+    "clean:node": "npm run clean && npm install",
+    "migrate": "npm run migrate --workspace=packages/backend",
+    "migrate:generate": "npm run migrate:generate --workspace=packages/backend",
+    "studio": "npm run studio --workspace=packages/backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "fullstack",
+    "monorepo",
+    "nextjs",
+    "express",
+    "typescript",
+    "postgresql",
+    "jwt",
+    "authentication"
+  ],
+  "author": "",
+  "license": "MIT"
+}

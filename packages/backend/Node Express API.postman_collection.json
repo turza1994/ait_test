@@ -1,0 +1,317 @@
+{
+  "info": {
+    "name": "Node Express API Boilerplate",
+    "description": "Complete API collection for Node.js Express boilerplate with authentication, sample endpoints, and proper CSRF protection",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Auto-refresh access token if it's expired",
+          "if (pm.collectionVariables.get('accessToken') && pm.request.url.path[0] !== 'health') {",
+          "    try {",
+          "        const response = pm.sendRequest({",
+          "            url: pm.collectionVariables.get('baseUrl') + '/api/auth/refresh-token',",
+          "            method: 'POST',",
+          "            header: [{",
+          "                key: 'Content-Type',",
+          "                value: 'application/json'",
+          "            }, {",
+          "                key: 'X-CSRF-Token',",
+          "                value: pm.collectionVariables.get('csrfToken')",
+          "            }],",
+          "            cookie: pm.cookies.jar().getAll()",
+          "        }, function (err, res) {",
+          "            if (res && res.code === 200) {",
+          "                const data = res.json();",
+          "                if (data.success) {",
+          "                    pm.collectionVariables.set('accessToken', data.data.accessToken);",
+          "                    console.log('Access token refreshed successfully');",
+          "                }",
+          "            }",
+          "        });",
+          "    } catch (error) {",
+          "        console.log('Token refresh failed, will use existing token');",
+          "    }",
+          "}"
+        ],
+        "type": "text/javascript"
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "// Extract CSRF token from response headers if present",
+          "const csrfHeader = pm.response.headers.get('x-csrf-token');",
+          "if (csrfHeader) {",
+          "    pm.collectionVariables.set('csrfToken', csrfHeader);",
+          "    console.log('CSRF token updated:', csrfHeader);",
+          "}",
+          "",
+          "// Extract user ID from responses",
+          "if (pm.response.code === 200 && pm.response.json().data?.user?.id) {",
+          "    pm.collectionVariables.set('userId', pm.response.json().data.user.id);",
+          "}",
+          "",
+          "// Show response summary",
+          "console.log('Status:', pm.response.code);",
+          "console.log('Response:', pm.response.json());"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Check API health status"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@example.com\",\n  \"password\": \"Password123!@#\",\n  \"name\": \"Test User\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "signup"]
+            },
+            "description": "Create a new user account"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@example.com\",\n  \"password\": \"Password123!@#\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login and receive access token"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save access token and update collection auth",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    if (data.success && data.data.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', data.data.accessToken);",
+                  "        console.log('Access token saved:', data.data.accessToken);",
+                  "        ",
+                  "        // Extract CSRF token if present in headers",
+                  "        const csrfHeader = pm.response.headers.get('x-csrf-token');",
+                  "        if (csrfHeader) {",
+                  "            pm.collectionVariables.set('csrfToken', csrfHeader);",
+                  "            console.log('CSRF token saved:', csrfHeader);",
+                  "        }",
+                  "        ",
+                  "        // Extract user ID",
+                  "        if (data.data.user?.id) {",
+                  "            pm.collectionVariables.set('userId', data.data.user.id);",
+                  "            console.log('User ID saved:', data.data.user.id);",
+                  "        }",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh-token"]
+            },
+            "description": "Refresh access token using refresh cookie (requires CSRF token)"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Logout and clear refresh cookie (requires authentication)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for user management"
+    },
+    {
+      "name": "Sample API",
+      "item": [
+        {
+          "name": "Get Sample Item",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sample/items/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sample", "items", "{{userId}}"]
+            },
+            "description": "Get sample item by user ID (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Sample Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Sample Item\",\n  \"description\": \"This item has been updated via API\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sample/items/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sample", "items", "{{userId}}"]
+            },
+            "description": "Update sample item (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Sample Item with Optimistic Locking",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Locked Sample Item\",\n  \"description\": \"This item uses optimistic locking\",\n  \"version\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sample/items/{{userId}}/lock",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sample", "items", "{{userId}}", "lock"]
+            },
+            "description": "Update sample item with optimistic locking (requires authentication)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Sample API endpoints demonstrating CRUD operations with authentication"
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+API Workflow and Data Flow Overview
+This project follows a clean, functional architecture with strict separation between HTTP handling, business logic, and data access layers.
+
+🚀 Request Lifecycle Flow
+
+1. Middleware Stack Processing
+HTTP Request → Security Stack → Route Matching → Response
+Security Stack (in order):
+1. helmet() - Security headers (XSS protection, etc.)
+2. cors() - Cross-origin resource sharing
+3. express.json() - Parse JSON request bodies
+4. cookieParser() - Parse cookies for auth tokens
+5. rateLimitMiddleware - Global rate limiting
+6. Route-specific middleware (auth, validation, CSRF)
+7. Global error handler - Catches all errors
+
+2. Layer Architecture Flow
+Request → Route → Controller → Service → Repository → Database
+Each layer has specific responsibilities:
+- Routes: HTTP method mapping + middleware chaining
+- Controllers: Request/response handling + input extraction
+- Services: Business logic + coordination
+- Repositories: Database operations + data transformation
+- Database: PostgreSQL via Drizzle ORM
+
+🔐 Authentication Flow
+Protected vs Unprotected Routes
+Unprotected (no auth required):
+- POST /api/auth/signup - User registration
+- POST /api/auth/login - User login
+- GET /api/health - Health check
+Protected (auth required):
+- POST /api/auth/logout - User logout
+- POST /api/auth/refresh-token - Token refresh (needs CSRF)
+- All /api/sample/* endpoints
+
+JWT Token Management
+Login/Signup → Generate Access Token (15min) → Set Refresh Cookie (7d) → Store Refresh Hash
+Token Refresh Flow:
+Protected Request → Check Access Token → If Expired → Use Refresh Cookie + CSRF → New Access Token
+
+🗄️ Database Transaction Patterns
+
+Two Key Approaches:
+1. Atomic Operations (Preferred):
+UPDATE items SET counter = counter + 1 WHERE id = ? RETURNING *
+2. Row-Level Locking (Complex Logic):
+BEGIN;
+SELECT * FROM items WHERE id = ? FOR UPDATE;
+-- Business logic calculations
+UPDATE items SET ... WHERE id = ?;
+COMMIT;
+
+🚨 Error Handling Flow
+Error Propagation Chain:
+DB/Validation Error → Repository (throws) → Service (throws) → Controller → Global Handler
+Error Categories:
+- 400: Validation errors, invalid credentials
+- 404: Resource not found
+- 500: Internal server errors
+
+🛡️ Security Flow
+Multiple Security Layers:
+1. Request Headers: Helmet security headers
+2. Rate Limiting: Global + endpoint-specific limits
+3. Authentication: JWT access tokens + HttpOnly refresh cookies
+4. CSRF Protection: Required for state-changing operations
+5. Input Validation: Zod schemas for all inputs
+6. Password Security: bcrypt hashing with salt rounds
+
+📊 Example Complete Flow: Protected Update Request
+
+PUT /api/sample/items/123
+{
+  "counter": 5
+}
+↓
+1. Security headers check (helmet)
+2. CORS validation
+3. JSON body parsing
+4. Cookie parsing
+5. Rate limiting check
+6. Route matching
+7. authMiddleware: Verify JWT access token
+8. validate(): Validate request body with Zod
+9. Controller: Extract ID + counter, call service
+10. Service: Call repository with atomic update
+11. Repository: Execute SQL with atomic increment
+12. Database: Update and return result
+13. Response: { success: true, data: updatedItem }
+
+🎯 Key Design Principles
+1. Functional Architecture: Pure functions, no classes
+2. Layer Isolation: Each layer only knows immediate dependencies
+3. Security by Default: Multiple validation layers
+4. Type Safety: End-to-end TypeScript + Zod validation
+5. Transaction Safety: Prefer atomic operations, use transactions only when needed
+6. Error Transparency: Clear error propagation with structured responses
+
+This architecture ensures maintainability, security, and scalability while maintaining clear separation between HTTP concerns, business logic, and data persistence.
