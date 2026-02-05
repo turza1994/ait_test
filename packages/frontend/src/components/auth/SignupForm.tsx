@@ -10,9 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useState } from 'react';
 import Link from 'next/link';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function SignupForm() {
   const router = useRouter();
+  const { setAuthData } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -22,6 +25,7 @@ export function SignupForm() {
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
+    defaultValues: { role: 'talent' },
   });
 
   const onSubmit = async (data: SignupFormData) => {
@@ -30,9 +34,19 @@ export function SignupForm() {
 
     try {
       const response = await apiClient.signup(data);
-      
+
       if (response.success && response.data) {
-        router.push('/login?message=signup-success');
+        const { user, accessToken } = response.data;
+        setAuthData(
+          {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role as 'employer' | 'talent',
+          },
+          accessToken
+        );
+        router.push('/dashboard');
       } else {
         throw new Error(response.message || 'Signup failed');
       }
@@ -100,6 +114,33 @@ export function SignupForm() {
               autoComplete="new-password"
               className="h-10 px-3 focus-visible:ring-2 motion-reduce:transition-none"
             />
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">I am a</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    {...register('role')}
+                    value="employer"
+                    className="rounded border-slate-300"
+                  />
+                  <span className="text-sm">Employer</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    {...register('role')}
+                    value="talent"
+                    className="rounded border-slate-300"
+                  />
+                  <span className="text-sm">Talent</span>
+                </label>
+              </div>
+              {errors.role?.message && (
+                <p className="text-sm text-red-600">{errors.role.message}</p>
+              )}
+            </div>
           </div>
 
           <div>

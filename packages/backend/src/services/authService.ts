@@ -12,14 +12,19 @@ import {
   type JwtPayload,
 } from '../utils/jwt.js';
 
-export async function signup(email: string, password: string) {
+export async function signup(
+  email: string,
+  password: string,
+  name: string,
+  role: string
+) {
   const existingUser = await findUserByEmail(email);
   if (existingUser) {
     throw new Error('Email already exists');
   }
 
   const passwordHash = await hashPassword(password);
-  const user = await createUser(email, passwordHash);
+  const user = await createUser(email, passwordHash, name, role);
 
   if (!user) {
     throw new Error('Failed to create user');
@@ -40,6 +45,7 @@ export async function signup(email: string, password: string) {
   return {
     user: {
       id: user.id,
+      name: user.name,
       email: user.email,
       role: user.role,
       createdAt: user.createdAt,
@@ -75,6 +81,7 @@ export async function login(email: string, password: string) {
   return {
     user: {
       id: user.id,
+      name: user.name,
       email: user.email,
       role: user.role,
       createdAt: user.createdAt,
@@ -120,4 +127,16 @@ export async function refreshToken(refreshTokenString: string) {
 
 export async function logout(userId: number) {
   await updateUserRefreshToken(userId, null);
+}
+
+export async function getMe(userId: number) {
+  const user = await findUserById(userId);
+  if (!user) return null;
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt,
+  };
 }

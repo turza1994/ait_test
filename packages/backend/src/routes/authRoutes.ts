@@ -3,6 +3,7 @@ import {
   signupController,
   loginController,
   logoutController,
+  meController,
 } from '../controllers/authController.js';
 import { validate } from '../middlewares/validate.js';
 import { authMiddleware } from '../middlewares/auth.js';
@@ -10,6 +11,7 @@ import { signupSchema, loginSchema } from '../schemas/auth.js';
 
 const router = Router();
 
+router.get('/me', authMiddleware, meController);
 router.post('/signup', validate(signupSchema), signupController);
 router.post('/login', validate(loginSchema), loginController);
 router.post('/logout', authMiddleware, logoutController);

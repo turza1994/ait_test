@@ -8,29 +8,37 @@ export function HeroSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-            Build Something Amazing
+            TalentX – AI & Data Expert Marketplace
           </h1>
           <p className="text-lg md:text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-            Production-ready fullstack application with Next.js 16, Express.js, and JWT authentication.
-            Start building your next project today.
+            Employers find the right talent. Talents find the right jobs. AI-powered matching and job descriptions.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link href="/jobs">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 motion-reduce:transition-none"
+              >
+                Browse jobs
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
             <Link href="/signup">
               <Button
                 size="lg"
-                className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white transition-colors duration-200 motion-reduce:transition-none"
+                variant="outline"
+                className="w-full sm:w-auto border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors duration-200 motion-reduce:transition-none"
               >
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
+                Get started
               </Button>
             </Link>
             <Link href="/login">
               <Button
-                variant="outline"
                 size="lg"
-                className="w-full sm:w-auto border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors duration-200 motion-reduce:transition-none"
+                variant="ghost"
+                className="w-full sm:w-auto text-slate-700 hover:bg-slate-100 transition-colors duration-200 motion-reduce:transition-none"
               >
-                Sign In
+                Log in
               </Button>
             </Link>
           </div>

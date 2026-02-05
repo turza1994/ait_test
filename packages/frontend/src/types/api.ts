@@ -10,14 +10,16 @@ export interface LoginRequest {
 }
 
 export interface SignupRequest {
+  name: string;
   email: string;
   password: string;
-  name: string;
+  role: 'employer' | 'talent';
 }
 
 export interface LoginResponse {
   user: {
-    id: string;
+    id: number;
+    name: string;
     email: string;
     role: string;
     createdAt: string;
@@ -27,7 +29,8 @@ export interface LoginResponse {
 
 export interface SignupResponse {
   user: {
-    id: string;
+    id: number;
+    name: string;
     email: string;
     role: string;
     createdAt: string;
@@ -44,10 +47,57 @@ export interface RefreshTokenResponse {
 }
 
 export interface User {
-  id: string;
+  id: number;
+  name: string;
   email: string;
   role: string;
   createdAt: string;
+}
+
+export interface Job {
+  id: number;
+  title: string;
+  techStack: string;
+  description: string;
+  deadline: string;
+  employerId: number;
+  companyName: string;
+  createdAt: string;
+  applicationCount: number;
+}
+
+export interface Applicant {
+  talentId: number;
+  name: string;
+  email: string;
+  source: string;
+}
+
+export interface MatchedTalent {
+  id: number;
+  name: string;
+  email: string;
+  matchScore: number;
+}
+
+export interface Invitation {
+  id: number;
+  jobId: number;
+  talentId: number;
+  status: string;
+  createdAt: string;
+  title: string;
+  companyName: string;
+  deadline: string;
+}
+
+export interface TalentApplication {
+  id: number;
+  jobId: number;
+  source: string;
+  createdAt: string;
+  title: string;
+  companyName: string;
 }
 
 export interface SampleItem {

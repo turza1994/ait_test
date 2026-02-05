@@ -18,13 +18,19 @@ export async function findUserById(id: number) {
   return result[0] ?? null;
 }
 
-export async function createUser(email: string, passwordHash: string) {
+export async function createUser(
+  email: string,
+  passwordHash: string,
+  name: string,
+  role: string
+) {
   const result = await db
     .insert(users)
     .values({
       email,
       passwordHash,
-      role: 'user',
+      name,
+      role,
     })
     .returning();
 
@@ -63,4 +69,15 @@ export async function updateUserRefreshTokenForLock(
   }
 
   return result[0];
+}
+
+export async function listTalents() {
+  return db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+    })
+    .from(users)
+    .where(eq(users.role, 'talent'));
 }

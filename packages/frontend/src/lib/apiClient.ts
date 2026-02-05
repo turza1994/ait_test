@@ -1,4 +1,16 @@
-import { ApiResponse, LoginRequest, LoginResponse, RefreshTokenResponse, SignupRequest, SignupResponse } from '@/types/api';
+import {
+  ApiResponse,
+  LoginRequest,
+  LoginResponse,
+  RefreshTokenResponse,
+  SignupRequest,
+  SignupResponse,
+  Job,
+  Applicant,
+  MatchedTalent,
+  Invitation,
+  TalentApplication,
+} from '@/types/api';
 import { getAccessToken, setAccessToken } from './auth';
 import { addCSRFToHeaders, extractCSRFFromResponse } from './csrf';
 
@@ -139,6 +151,76 @@ class ApiClient {
   // Generic DELETE request
   async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'DELETE' });
+  }
+
+  // Jobs (public)
+  async getJobs(search?: string): Promise<ApiResponse<Job[]>> {
+    const params = search ? `?search=${encodeURIComponent(search)}` : '';
+    return this.get<Job[]>(`/api/jobs${params}`);
+  }
+
+  async getJob(id: number): Promise<ApiResponse<Job>> {
+    return this.get<Job>(`/api/jobs/${id}`);
+  }
+
+  async createJob(data: {
+    title: string;
+    techStack: string;
+    description?: string;
+    deadline: string;
+    companyName: string;
+  }): Promise<ApiResponse<Job>> {
+    return this.post<Job>('/api/jobs', data);
+  }
+
+  async applyToJob(
+    jobId: number,
+    body: { source: 'manual' | 'invitation'; invitationId?: number }
+  ): Promise<ApiResponse<unknown>> {
+    return this.post(`/api/jobs/${jobId}/apply`, body);
+  }
+
+  // Employer
+  async getEmployerJobApplicants(
+    jobId: number
+  ): Promise<ApiResponse<Applicant[]>> {
+    return this.get<Applicant[]>(`/api/employer/jobs/${jobId}/applicants`);
+  }
+
+  async getMatchedTalents(): Promise<ApiResponse<MatchedTalent[]>> {
+    return this.get<MatchedTalent[]>('/api/employer/matched-talents');
+  }
+
+  async invite(data: {
+    jobId: number;
+    talentId: number;
+  }): Promise<ApiResponse<Invitation>> {
+    return this.post<Invitation>('/api/employer/invite', data);
+  }
+
+  async getEmployerJobs(): Promise<ApiResponse<Job[]>> {
+    return this.get<Job[]>('/api/employer/jobs');
+  }
+
+  // Talent
+  async getTalentInvitations(): Promise<ApiResponse<Invitation[]>> {
+    return this.get<Invitation[]>('/api/talent/invitations');
+  }
+
+  async getTalentApplications(): Promise<
+    ApiResponse<TalentApplication[]>
+  > {
+    return this.get<TalentApplication[]>('/api/talent/applications');
+  }
+
+  async respondToInvitation(
+    invitationId: number,
+    status: 'accepted' | 'declined'
+  ): Promise<ApiResponse<Invitation>> {
+    return this.post<Invitation>(
+      `/api/talent/invitations/${invitationId}/respond`,
+      { status }
+    );
   }
 }
 

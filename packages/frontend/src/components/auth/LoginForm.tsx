@@ -20,6 +20,7 @@ export function LoginForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const message = searchParams.get('message');
+  const returnUrl = searchParams.get('returnUrl');
   const showSuccessMessage = message === 'signup-success';
 
   const {
@@ -36,7 +37,7 @@ export function LoginForm() {
 
     try {
       await login(data.email, data.password);
-      router.push('/dashboard');
+      router.push(returnUrl || '/dashboard');
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Login failed');
     } finally {

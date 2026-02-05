@@ -28,12 +28,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const accessToken = getAccessToken();
 
         if (accessToken) {
-          // Verify token is still valid by making a request
           try {
-            const response = await apiClient.get('/api/health');
-            if (response.success) {
+            const response = await apiClient.get<{
+              id: number;
+              name: string;
+              email: string;
+              role: string;
+              createdAt: string;
+            }>('/api/auth/me');
+            if (response.success && response.data) {
+              const user = {
+                id: response.data.id,
+                name: response.data.name,
+                email: response.data.email,
+                role: response.data.role as 'employer' | 'talent',
+              };
               setState(prev => ({
                 ...prev,
+                user,
                 accessToken,
                 isAuthenticated: true,
                 isLoading: false,
@@ -41,20 +53,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return;
             }
           } catch {
-            // Token is invalid, try to refresh using apiClient
             try {
               const refreshed = await apiClient.refreshAccessToken();
               if (refreshed) {
                 const newAccessToken = getAccessToken();
                 if (newAccessToken) {
-                  setState(prev => ({
-                    ...prev,
-                    accessToken: newAccessToken,
-                    isAuthenticated: true,
-                    isLoading: false,
-                  }));
-                  return;
+                  const meResponse = await apiClient.get<{
+                    id: number;
+                    name: string;
+                    email: string;
+                    role: string;
+                    createdAt: string;
+                  }>('/api/auth/me');
+                  if (meResponse.success && meResponse.data) {
+                    const user = {
+                      id: meResponse.data.id,
+                      name: meResponse.data.name,
+                      email: meResponse.data.email,
+                      role: meResponse.data.role as 'employer' | 'talent',
+                    };
+                    setState(prev => ({
+                      ...prev,
+                      user,
+                      accessToken: newAccessToken,
+                      isAuthenticated: true,
+                      isLoading: false,
+                    }));
+                    return;
+                  }
                 }
+                setState(prev => ({
+                  ...prev,
+                  accessToken: newAccessToken,
+                  isAuthenticated: true,
+                  isLoading: false,
+                }));
+                return;
               }
             } catch (refreshError) {
               console.error('Token refresh failed:', refreshError);
@@ -88,14 +122,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (response.success && response.data) {
         const { user, accessToken } = response.data;
-        
-        // Store access token
         setAccessToken(accessToken);
-        
-        // Note: Refresh token is set by server as HttpOnly cookie
-        
+        const authUser = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role as 'employer' | 'talent',
+        };
         setState({
-          user,
+          user: authUser,
           accessToken,
           isAuthenticated: true,
           isLoading: false,
@@ -141,11 +176,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setAuthData = (user: AuthContextType['user'], accessToken: string) => {
+    if (!user) return;
+    setAccessToken(accessToken);
+    setState({
+      user,
+      accessToken,
+      isAuthenticated: true,
+      isLoading: false,
+    });
+  };
+
   const value: AuthContextType = {
     ...state,
     login,
     logout,
     refreshToken,
+    setAuthData,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

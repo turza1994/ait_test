@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
-import { signup, login, logout } from '../services/authService.js';
+import { signup, login, logout, getMe } from '../services/authService.js';
 import { SignupInput, LoginInput } from '../schemas/auth.js';
 import {
   setRefreshTokenCookie,
@@ -11,9 +11,9 @@ import { logger } from '../utils/logger.js';
 
 export const signupController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { email, password }: SignupInput = req.body;
+    const { email, password, name, role }: SignupInput = req.body;
 
-    const result = await signup(email, password);
+    const result = await signup(email, password, name, role);
 
     setRefreshTokenCookie(res, result.refreshToken);
 
@@ -85,5 +85,21 @@ export const logoutController = asyncHandler(
       success: true,
       message: 'Logged out successfully',
     });
+  }
+);
+
+export const meController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+    const user = await getMe(userId);
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+    res.json({ success: true, data: user });
   }
 );
